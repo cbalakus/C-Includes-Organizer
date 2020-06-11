@@ -12,7 +12,7 @@ namespace Edit_61850_Includes
     {
         static void Main(string[] args)
         {
-            string startPath = @"D:\cMake\iec61850";
+            string startPath = @"C:\Users\can.alakus\Desktop\cMake\iec61850";
             setDirectories(startPath);
             setIncludes(startPath);
             Console.WriteLine("Finished!");
@@ -47,33 +47,25 @@ namespace Edit_61850_Includes
                     File.WriteAllLines(file, lines.ToArray());
                 }
         }
+
+        static void findTheWay(string[] ary1, string[] ary2, ref string retVal)
+        {
+            for (int i = 0; i < ary1.Length; i++)
+                if (ary2[i] == ary1[i])
+                    retVal = new Regex(Regex.Escape(ary1[i] + "\\")).Replace(retVal, "", 1);
+                else
+                    break;
+        }
+
         static string replaceFirst(string str1, string str2)
         {
             string retVal = str2;
             var list1 = str1.Split('\\');
             var list2 = str2.Split('\\');
             if (list1.Length >= list2.Length)
-                for (int i = 0; i < list2.Length; i++)
-                {
-                    if (list2[i] == list1[i])
-                    {
-                        var regex = new Regex(Regex.Escape(list1[i] + "\\"));
-                        retVal = regex.Replace(retVal, "", 1);
-                    }
-                    else
-                        break;
-                }
+                findTheWay(list2, list1, ref retVal);
             else
-                for (int i = 0; i < list1.Length; i++)
-                {
-                    if (list2[i] == list1[i])
-                    {
-                        var regex = new Regex(Regex.Escape(list1[i] + "\\"));
-                        retVal = regex.Replace(retVal, "", 1);
-                    }
-                    else
-                        break;
-                }
+                findTheWay(list1, list2, ref retVal);
             return retVal;
         }
         static string getParentStr(int len)
@@ -99,20 +91,14 @@ namespace Edit_61850_Includes
                         {
                             string newStr = line;
                             string headerName = lineTrimmed.Replace("#include", "").Trim();
-
                             if (headerName.StartsWith("\"") && !headerName.Contains("/") && !headerName.Contains("\\"))
                             {
                                 string include = findIncludePath(headerName, file);
                                 if (include != "")
                                 {
-                                    string includeStr = "";
-                                    if (parentQtt == 0)
-                                        includeStr = replaceFirst(file, include);
-                                    else
-                                    {
-                                        var asd = getParentStr(parentQtt);
-                                        includeStr = asd + replaceFirst(file, include).Replace("\\", "/");
-                                    }
+                                    string includeStr = parentQtt == 0 ?
+                                        replaceFirst(file, include) :
+                                        getParentStr(parentQtt) + replaceFirst(file, include).Replace("\\", "/");
                                     parentQtt = 0;
                                     if (includeStr != "")
                                         newStr = line.Replace(headerName.Replace("\"", ""), includeStr);
@@ -154,7 +140,6 @@ namespace Edit_61850_Includes
                     var parentStr = searchInParent(fileName, path);
                     if (parentStr != "")
                         return parentStr;
-                    return "";
                 }
             }
             return "";
@@ -199,7 +184,7 @@ namespace Edit_61850_Includes
                 }
                 return "";
             }
-            catch (Exception)
+            catch
             {
                 return "";
             }
